@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using StoreStock.Data;
+using StoreStock.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<ProductService>();
 
 // Register DbContext
 var connectionString = builder.Configuration.GetConnectionString("DatabaseString");

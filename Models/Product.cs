@@ -9,10 +9,10 @@ namespace StoreStock.Models
         [Required]
         public string Name { get; set; }
 
-        public string Description { get; set; }
+        public string Description { get; set; } = "No description available";
 
         [Range(0, double.MaxValue)]
         public decimal Price { get; set; }
-        public List<StockItem> StockItems { get; set; }
+    
     }
 }
