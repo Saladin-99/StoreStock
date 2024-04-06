@@ -65,6 +65,10 @@ namespace StoreStock.Controllers
                 {
                     return NotFound();
                 }
+                else if(product.Name == null)
+                {
+                    return BadRequest("Name must have a value.");
+                }
                 _productService.CreateProduct(product);
                 return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, product);
             }
