@@ -57,6 +57,7 @@ public StockItem GetStockItemById(int storeId, int productId)
         {
             try
             {
+               
                 var store = _context.Stores.Find(storeId) ?? throw new EntityNotFoundException("Store not Found.");
                 var product = _context.Products.Find(productId) ?? throw new EntityNotFoundException("Product not Found.");
 

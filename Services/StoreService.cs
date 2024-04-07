@@ -96,21 +96,32 @@ namespace StoreStock.Services
             }
         }
 
-        public List<Product> GetProductsInStock(int storeId)
+        public class ProductStockDTO
+        {
+            public Product Product { get; set; }
+            public int Quantity { get; set; }
+        }
+
+        public List<ProductStockDTO> GetStock(int storeId)
         {
             try
             {
                 var productsInStock = _context.StockItems
                     .Where(si => si.StoreId == storeId)
                     .Include(si => si.Product)
-                    .Select(si => si.Product)
+                    .Select(si => new ProductStockDTO
+                    {
+                    Product = si.Product,
+                    Quantity = si.Quantity
+                    })
                     .ToList();
+            
                 if (productsInStock.Count == 0)
                 {
                     throw new EntityNotFoundException("No products in stock.");
                 }
+        
                 return productsInStock;
-                
             }
             catch (Exception ex)
             {

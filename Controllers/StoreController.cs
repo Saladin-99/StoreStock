@@ -109,11 +109,11 @@ namespace StoreStock.Controllers
         }
 
         [HttpGet("{storeId}/products")]
-        public IActionResult GetProductsOfStore(int storeId)
+        public IActionResult GetStockOfStore(int storeId)
         {
             try
             {
-                var products = _storeService.GetProductsInStock(storeId);
+                var products = _storeService.GetStock(storeId);
                 return Ok(products);
             }
             catch (Exception ex)
@@ -128,19 +128,19 @@ namespace StoreStock.Controllers
         }
 
         [HttpPost("{storeId}/addStock")]
-        public IActionResult AddStockToStore(int storeId, int productId, int quantity)
+        public IActionResult AddStockToStore(int storeId, StockUpdateRequest stock)
         {
             try
             {
-
-                StockItem? stockItem = _stockItemService.GetStockItemById(storeId,productId);
+                Console.Write("aa"+stock.ProductId+"bb"+storeId);
+                StockItem? stockItem = _stockItemService.GetStockItemById(storeId,stock.ProductId);
                 if(stockItem == null)
                 {
-                    _stockItemService.CreateItem(storeId,productId,quantity);
+                    _stockItemService.CreateItem(storeId,stock.ProductId,stock.Quantity);
                 }
                 else
                 {
-                    _stockItemService.UpdateItemQuantity(storeId,productId,quantity);
+                    _stockItemService.UpdateItemQuantity(storeId,stock.ProductId,stock.Quantity);
                 }
                 return Ok("Stock added to store successfully!");
             }
@@ -155,4 +155,11 @@ namespace StoreStock.Controllers
             }
         }
     }
+
+    public class StockUpdateRequest
+    {
+        public int ProductId { get; set; }
+        public int Quantity { get; set; }
+    }
+
 }
