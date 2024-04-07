@@ -1,0 +1,124 @@
+@model List<StoreStock.Models.Product>
+
+<h1>All Products</h1>
+
+<!-- Form to add a new product -->
+<form id="addProductForm">
+    <input type="text" id="name" placeholder="Product Name" required>
+    <input type="text" id="description" placeholder="Product Description" required>
+    <input type="number" id="price" placeholder="Product Price" required>
+    <button type="button" onclick="addProduct()">Add Product</button>
+</form>
+
+<table id="productTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Action</th> <!-- New column for the delete button -->
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Products will be dynamically added here -->
+    </tbody>
+</table>
+
+@section scripts {
+    <script>
+        async function fetchProducts() {
+            try {
+                const response = await fetch('/api/Product');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+                const products = await response.json();
+                return products;
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                throw error;
+            }
+        }
+
+        // Function to add a new product
+        function addProduct() {
+            var name = document.getElementById('name').value;
+            var description = document.getElementById('description').value;
+            var price = document.getElementById('price').value;
+            var body;
+            if (description.trim() === '' || !description) {
+                body = JSON.stringify({
+                    Name: name,
+                    Price: price
+                    })
+            }
+            else 
+            {
+                body = JSON.stringify({
+                    Name: name,
+                    Description: description,
+                    Price: price
+                    })
+            }
+            fetch('/api/Product', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: body
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Error adding product');
+            })
+            .then(data => {
+                loadProducts();
+            })
+            .catch(error => {
+                console.error('Error adding product:', error);
+            });
+        }
+
+        // Function to load products from the server and render them in the table
+        async function loadProducts() {
+            try {
+                const products = await fetchProducts();
+                const productTableBody = document.querySelector('#productTable tbody');
+                productTableBody.innerHTML = ''; // Clear existing rows
+                products.forEach(product => {
+                    const newRow = `
+                        <tr>
+                            <td>${product.id}</td>
+                            <td>${product.name}</td>
+                            <td>${product.description}</td>
+                            <td>${product.price}</td>
+                            <td><button onclick="deleteProduct(${product.id})">Delete</button></td>
+                        </tr>`;
+                    productTableBody.insertAdjacentHTML('beforeend', newRow);
+                });
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        // Load products when the page is loaded
+        document.addEventListener('DOMContentLoaded', loadProducts);
+
+        async function deleteProduct(productId) {
+            try {
+                const response = await fetch(`/api/Product/${productId}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) {
+                    throw new Error('Error deleting product');
+                }
+                loadProducts(); // Trigger reload of products after successful deletion
+            } catch (error) {
+                console.error('Error deleting product:', error);
+            }
+        }
+    </script>
+}

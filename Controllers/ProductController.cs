@@ -8,14 +8,9 @@ namespace StoreStock.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductController : ControllerBase
+    public class ProductController(ProductService productService) : ControllerBase
     {
-        private readonly ProductService _productService;
-
-        public ProductController(ProductService productService)
-        {
-            _productService = productService;
-        }
+        private readonly ProductService _productService = productService;
 
         [HttpGet]
         public IActionResult GetAllProducts()
