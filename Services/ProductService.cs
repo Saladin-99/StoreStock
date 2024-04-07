@@ -6,23 +6,15 @@ using StoreStock.Models;
 
 namespace StoreStock.Services
 {
-    public class ProductService
+    public class ProductService(MyDbContext context)
     {
-        private readonly MyDbContext _context;
-
-        public ProductService(MyDbContext context)
-        {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-        }
+        private readonly MyDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
         public void CreateProduct(Product product)
         {
             try
             {
-                if (product == null)
-                {
-                    throw new ArgumentNullException(nameof(product));
-                }
+                ArgumentNullException.ThrowIfNull(product);
 
                 _context.Products.Add(product);
                 _context.SaveChanges();
@@ -39,7 +31,7 @@ namespace StoreStock.Services
             try
             {
                 var product = _context.Products.ToList();
-                if (product == null)
+                if (product.Count == 0)
                 {
                     throw new EntityNotFoundException($"No products created yet.");
                 }
@@ -57,11 +49,7 @@ namespace StoreStock.Services
         {
             try
             {
-                var product = _context.Products.Find(id);
-                if (product == null)
-                {
-                    throw new EntityNotFoundException($"Product with ID {id} not found.");
-                }
+                var product = _context.Products.Find(id) ?? throw new EntityNotFoundException($"Product with ID {id} not found.");
                 return product;
             }
             catch (Exception ex)
@@ -75,17 +63,8 @@ namespace StoreStock.Services
         {
             try
             {
-                if (product == null)
-                {
-                    throw new ArgumentNullException(nameof(product));
-                }
-                var oldProduct = _context.Products.Find(product.Id);
-
-                if (oldProduct == null)
-                {
-                    throw new EntityNotFoundException($"Product not found.");
-                }
-
+                ArgumentNullException.ThrowIfNull(product);
+                var oldProduct = _context.Products.Find(product.Id) ?? throw new EntityNotFoundException($"Product not found.");
                 oldProduct.Name = product.Name;
                 oldProduct.Price = product.Price;
                 oldProduct.Description = product.Description;
@@ -102,12 +81,7 @@ namespace StoreStock.Services
         {
             try
             {
-                var product = _context.Products.Find(id);
-                if (product == null)
-                {
-                    throw new EntityNotFoundException($"Product with ID {id} not found.");
-                }
-
+                var product = _context.Products.Find(id) ?? throw new EntityNotFoundException($"Product with ID {id} not found.");
                 _context.Products.Remove(product);
                 _context.SaveChanges();
             }

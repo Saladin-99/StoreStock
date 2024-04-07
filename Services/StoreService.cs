@@ -7,23 +7,15 @@ using StoreStock.Models;
 
 namespace StoreStock.Services
 {
-    public class StoreService
+    public class StoreService(MyDbContext context)
     {
-        private readonly MyDbContext _context;
-
-        public StoreService(MyDbContext context)
-        {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-        }
+        private readonly MyDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
         public void CreateStore(Store store)
         {
             try
             {
-                if (store == null)
-                {
-                    throw new ArgumentNullException(nameof(store));
-                }
+                ArgumentNullException.ThrowIfNull(store);
 
                 _context.Stores.Add(store);
                 _context.SaveChanges();
@@ -40,7 +32,7 @@ namespace StoreStock.Services
             try
             {
                 var stores = _context.Stores.ToList();
-                if (stores == null || stores.Count == 0)
+                if (stores.Count == 0)
                 {
                     throw new EntityNotFoundException("No stores found.");
                 }
@@ -50,7 +42,7 @@ namespace StoreStock.Services
             catch (Exception ex)
             {
                 // Log or handle the exception
-                throw new ServiceException("Error occurred while retrieving stores.", ex);
+                throw new ServiceException("Error occurred while retrieving stores. " + ex.Message, ex);
             }
         }
 
@@ -58,17 +50,13 @@ namespace StoreStock.Services
         {
             try
             {
-                var store = _context.Stores.Find(id);
-                if (store == null)
-                {
-                    throw new EntityNotFoundException($"Store with ID {id} not found.");
-                }
+                var store = _context.Stores.Find(id) ?? throw new EntityNotFoundException($"Store with ID {id} not found.");
                 return store;
             }
             catch (Exception ex)
             {
                 // Log or handle the exception
-                throw new ServiceException("Error occurred while retrieving the store.", ex);
+                throw new ServiceException("Error occurred while retrieving the store."  + ex.Message, ex);
             }
         }
 
@@ -76,17 +64,10 @@ namespace StoreStock.Services
         {
             try
             {
-                if (store == null)
-                {
-                    throw new ArgumentNullException(nameof(store));
-                }
-                var oldStore = _context.Stores.Find(store.Id);
+                ArgumentNullException.ThrowIfNull(store);
 
-                if (oldStore == null)
-                {
-                    throw new EntityNotFoundException($"Store not found.");
-                }
-
+                var oldStore = _context.Stores.Find(store.Id) ?? throw new EntityNotFoundException($"Store not found.");
+                
                 oldStore.Name = store.Name;
                 oldStore.Address = store.Address;
                 // Update other properties as needed
@@ -95,7 +76,7 @@ namespace StoreStock.Services
             catch (Exception ex)
             {
                 // Log or handle the exception
-                throw new ServiceException("Error occurred while updating the store.", ex);
+                throw new ServiceException("Error occurred while updating the store. " + ex.Message, ex);
             }
         }
 
@@ -103,19 +84,15 @@ namespace StoreStock.Services
         {
             try
             {
-                var store = _context.Stores.Find(id);
-                if (store == null)
-                {
-                    throw new EntityNotFoundException($"Store with ID {id} not found.");
-                }
-
+                var store = _context.Stores.Find(id) ?? throw new EntityNotFoundException($"Store with ID {id} not found.");
+                
                 _context.Stores.Remove(store);
                 _context.SaveChanges();
             }
             catch (Exception ex)
             {
                 // Log or handle the exception
-                throw new ServiceException("Error occurred while deleting the store.", ex);
+                throw new ServiceException("Error occurred while deleting the store. " + ex.Message, ex);
             }
         }
 
@@ -128,14 +105,17 @@ namespace StoreStock.Services
                     .Include(si => si.Product)
                     .Select(si => si.Product)
                     .ToList();
-                
+                if (productsInStock.Count == 0)
+                {
+                    throw new EntityNotFoundException("No products in stock.");
+                }
                 return productsInStock;
                 
             }
             catch (Exception ex)
             {
                 // Log or handle the exception
-                throw new ServiceException("Error occurred while retrieving products in stock for the store.", ex);
+                throw new ServiceException("Error occurred while retrieving products in stock for the store. " + ex.Message, ex);
             }
         }
 
@@ -143,17 +123,10 @@ namespace StoreStock.Services
         {
             try
             {
-                var store = _context.Stores.Include(s => s.StockItems).FirstOrDefault(s => s.Id == stockItem.StoreId);
-                if (store == null)
-                {
-                    throw new EntityNotFoundException($"Store with ID {stockItem.StoreId} not found.");
-                }
+                var store = _context.Stores.Include(s => s.StockItems).FirstOrDefault(s => s.Id == stockItem.StoreId) ?? throw new EntityNotFoundException($"Store with ID {stockItem.StoreId} not found.");
 
                 // Ensure stockItems collection is initialized
-                if (store.StockItems == null)
-                {
-                    store.StockItems = new List<StockItem>();
-                }
+                store.StockItems ??= [];
 
                 store.StockItems.Add(stockItem);
                 _context.SaveChanges();
@@ -161,7 +134,7 @@ namespace StoreStock.Services
             catch (Exception ex)
             {
                 // Log or handle the exception
-                throw new ServiceException("Error occurred while adding a stock item to the store.", ex);
+                throw new ServiceException("Error occurred while adding a stock item to the store. " + ex.Message, ex);
             }
 
         }
@@ -170,25 +143,16 @@ namespace StoreStock.Services
         {
             try
             {
-                var store = _context.Stores.Include(s => s.StockItems).FirstOrDefault(s => s.Id == stockItem.StoreId);
-                if (store == null)
-                {
-                    throw new EntityNotFoundException($"Store with ID {stockItem.StoreId} not found.");
-                }
-
-                var existingStockItem = store.StockItems.FirstOrDefault(si => si.ProductId == stockItem.ProductId);
-                if (existingStockItem == null)
-                {
-                    throw new EntityNotFoundException($"Stock item not found in the store.");
-                }
-
+                var store = _context.Stores.Include(s => s.StockItems).FirstOrDefault(s => s.Id == stockItem.StoreId) ?? throw new EntityNotFoundException($"Store with ID {stockItem.StoreId} not found.");
+                ArgumentNullException.ThrowIfNull(store.StockItems);
+                var existingStockItem = store.StockItems.FirstOrDefault(si => si.ProductId == stockItem.ProductId) ?? throw new EntityNotFoundException($"Stock item not found in the store.");
                 existingStockItem.Quantity = stockItem.Quantity;
                 _context.SaveChanges();
             }
             catch (Exception ex)
             {
                 // Log or handle the exception
-                throw new ServiceException("Error occurred while updating a stock item in the store.", ex);
+                throw new ServiceException("Error occurred while updating a stock item in the store. " + ex.Message, ex);
             }
         }
     }

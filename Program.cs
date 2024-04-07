@@ -7,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<StoreService>();
+builder.Services.AddScoped<StockItemService>();
 
 // Register DbContext
 var connectionString = builder.Configuration.GetConnectionString("DatabaseString");
