@@ -93,8 +93,8 @@
                 throw new Error('Error adding store');
             })
             .then(data => {
-                // Reload the page to reflect the changes
-                location.reload();
+                loadStores();
+                alert("Store added successfully");
             })
             .catch(error => {
                 console.error('Error adding store:', error);
@@ -110,8 +110,8 @@
                 if (!response.ok) {
                     throw new Error('Error deleting store');
                 }
-                // Reload the page to reflect the changes
-                location.reload();
+                loadStores();
+                alert("Store deleted successfully")
             } catch (error) {
                 console.error('Error deleting store:', error);
             }

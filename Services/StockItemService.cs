@@ -13,7 +13,7 @@ namespace StoreStock.Services
         private readonly StoreService _storeService = storeService ?? throw new ArgumentNullException(nameof(storeService));
 
         public List<StockItem> GetAllStockItems()
-{
+    {
     try
     {
         var stockItems = _context.StockItems
@@ -35,8 +35,8 @@ namespace StoreStock.Services
     }
 }
 
-public StockItem GetStockItemById(int storeId, int productId)
-{
+    public StockItem GetStockItemById(int storeId, int productId)
+    {
     try
     {
         var stockItem = _context.StockItems
@@ -98,5 +98,45 @@ public StockItem GetStockItemById(int storeId, int productId)
                 throw new ServiceException("Error occurred while updating stock item quantity. " + ex.Message , ex);
             }
         }
+
+        public void DeleteStockItem(int storeId, int productId)
+        {
+            try
+            {
+                var stockItemToDelete = _context.StockItems.FirstOrDefault(si => si.StoreId == storeId && si.ProductId == productId) ?? throw new EntityNotFoundException("Stock item not found.");
+                _context.StockItems.Remove(stockItemToDelete);
+
+                var store = _context.Stores.FirstOrDefault(s => s.Id == storeId) ?? throw new EntityNotFoundException("Store not found.");
+                store.StockItems?.Remove(stockItemToDelete);
+
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception
+                throw new ServiceException("Error occurred while deleting stock item. " + ex.Message, ex);
+            }
+        }
+
+
+        public void DeleteStock(int storeId)
+        {
+            try
+            {
+                var stockItemsToDelete = _context.StockItems.Where(si => si.StoreId == storeId).ToList();
+                if (stockItemsToDelete.Count != 0)
+                {
+
+                    _context.StockItems.RemoveRange(stockItemsToDelete);
+                    _context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception
+                throw new ServiceException("Error occurred while deleting stock items. " + ex.Message, ex);
+            }
+        }
+
     }
 }

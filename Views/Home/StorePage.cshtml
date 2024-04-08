@@ -122,6 +122,7 @@
                             <td>${item.product.name}</td>
                             <td>${item.product.description}</td>
                             <td>${item.quantity}</td>
+                            <td><button onclick="removeFromStock(${item.product.id})">Remove</button></td>
                         </tr>`;
                     stockTableBody.insertAdjacentHTML('beforeend', row);
                 });
@@ -176,7 +177,7 @@
                 if (!response.ok) {
                     throw new Error('Failed to update store');
                 }
-                populateStoreDetails();
+                await populateStoreDetails();
                 alert('Store updated successfully!');
             } catch (error) {
                 console.error('Error updating store:', error);
@@ -201,10 +202,31 @@
                 if (!response.ok) {
                     throw new Error('Failed to add product to stock');
                 }
-                populateStock(); // Refresh stock table
+                await populateStock(); // Refresh stock table
                 alert('Product added to stock successfully!');
             } catch (error) {
                 console.error('Error adding product to stock:', error);
+            }
+        }
+
+        async function removeFromStock(productId) {
+            try {
+                const storeId = getStoreIdFromUrl();
+                console.log(storeId)
+                console.log(productId)
+                const response = await fetch(`/api/Store/${storeId}/removeStock/${productId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to remove product from stock');
+                }
+                await populateStock(); // Refresh stock table
+                alert('Product removed from stock successfully!');
+            } catch (error) {
+                console.error('Error removing product from stock:', error);
             }
         }
 

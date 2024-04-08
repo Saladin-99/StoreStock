@@ -96,7 +96,9 @@ namespace StoreStock.Controllers
             try
             {
                 _storeService.DeleteStore(id);
+                _stockItemService.DeleteStock(id);
                 return Ok("Store deleted successfully!");
+                
             }
             catch (Exception ex)
             {
@@ -158,6 +160,27 @@ namespace StoreStock.Controllers
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
         }
+
+        [HttpDelete("{storeId}/removeStock/{productId}")]
+        public IActionResult RemoveStock(int storeId, int productId)
+        {
+            try
+            {
+                Console.Write("store= " + storeId + " product = " + productId);
+                _stockItemService.DeleteStockItem(storeId, productId);
+                return Ok("Stock removed from store successfully!");
+            }
+            catch (Exception ex)
+            {
+                if (ex.InnerException is EntityNotFoundException)
+                {
+                    return NotFound(ex.Message);
+                }
+                // Log the exception
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
     }
 
     public class StockUpdateRequest
