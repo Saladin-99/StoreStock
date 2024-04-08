@@ -1,8 +1,218 @@
-@{
-    ViewData["Title"] = "Home Page";
-}
+@model StoreStock.Models.Store
 
-<div class="text-center">
-    <h1 class="display-4">Welcome to Store page</h1>
-    <p><a>find things here.</a>.</p>
+<h1>Store Page</h1>
+
+<!-- Display store name and address -->
+<div>
+    <h2 id="storeName">[storename]</h2>
+    <p id="storeAddress">[storeaddress]</p>
 </div>
+
+<!-- Form to update store name and address -->
+<form id="updateStoreForm">
+    <input type="text" id="newStoreName" placeholder="New Store Name" required>
+    <input type="text" id="newStoreAddress" placeholder="New Store Address" required>
+    <button type="button" onclick="updateStore()">Update Store</button>
+</form>
+
+
+<!-- Section to display products in stock -->
+<h2>Products in Stock</h2>
+<table id="stockTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Quantity</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Products will be dynamically added here -->
+    </tbody>
+</table>
+
+<!-- Section to display all products with quantity input -->
+<h2>All Products</h2>
+<table id="allProductsTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Products will be dynamically added here -->
+    </tbody>
+</table>
+
+@section scripts {
+    <script>
+        // Function to populate store name and address
+        async function populateStoreDetails() {
+            try {
+                const storeId = getStoreIdFromUrl();
+                const response = await fetch(`/api/Store/${storeId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch store details');
+                }
+                const store = await response.json();
+                document.getElementById('storeName').innerText = store.name;
+                document.getElementById('storeAddress').innerText = store.address;
+                document.getElementById('newStoreName').placeholder = store.name;
+                document.getElementById('newStoreAddress').placeholder = store.address;
+            } catch (error) {
+                console.error('Error populating store details:', error);
+            }
+        }
+
+
+        // Function to get the store ID from the current URL
+        function getStoreIdFromUrl() {
+            const url = window.location.href;
+            const lastSlashIndex = url.lastIndexOf('/');
+            return url.substring(lastSlashIndex + 1);
+        }
+
+        // Function to fetch products in stock for the store
+        async function fetchStock() {
+            try {
+                const storeId = getStoreIdFromUrl();
+                const response = await fetch(`/api/Store/${storeId}/products`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products in stock');
+                }
+                const stock = await response.json();
+                return stock;
+            } catch (error) {
+                console.error('Error fetching products in stock:', error);
+                throw error;
+            }
+        }
+
+        // Function to fetch all products
+        async function fetchAllProducts() {
+            try {
+                const response = await fetch('/api/Product');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch all products');
+                }
+                const products = await response.json();
+                return products;
+            } catch (error) {
+                console.error('Error fetching all products:', error);
+                throw error;
+            }
+        }
+
+        // Function to populate products in stock table
+        async function populateStock() {
+            try {
+                const stock = await fetchStock();
+                const stockTableBody = document.querySelector('#stockTable tbody');
+                stockTableBody.innerHTML = ''; // Clear existing rows
+                stock.forEach(item => {
+                    const row = `
+                        <tr>
+                            <td>${item.product.id}</td>
+                            <td>${item.product.name}</td>
+                            <td>${item.product.description}</td>
+                            <td>${item.quantity}</td>
+                        </tr>`;
+                    stockTableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (error) {
+                console.error('Error populating stock:', error);
+            }
+        }
+
+        // Function to populate all products table
+        async function populateAllProducts() {
+            try {
+                const products = await fetchAllProducts();
+                const allProductsTableBody = document.querySelector('#allProductsTable tbody');
+                allProductsTableBody.innerHTML = ''; // Clear existing rows
+                products.forEach(product => {
+                    const row = `
+                        <tr>
+                            <td>${product.id}</td>
+                            <td>${product.name}</td>
+                            <td>${product.description}</td>
+                            <td>${product.price}</td>
+                            <td><input type="number" id="quantity_${product.id}" value="0" min="0"></td>
+                            <td><button onclick="addToStock(${product.id})">Buy</button></td>
+                        </tr>`;
+                    allProductsTableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (error) {
+                console.error('Error populating all products:', error);
+            }
+        }
+
+        // Function to update store name and Address
+        async function updateStore() {
+            try {
+                const storeId = getStoreIdFromUrl();
+                const newName = document.getElementById('newStoreName').value;
+                const newAddress = document.getElementById('newStoreAddress').value;
+                console.log(storeId);
+                console.log(newName);
+                console.log(newAddress);
+                const response = await fetch(`/api/Store/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: storeId,
+                        Name: newName,
+                        Address: newAddress
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to update store');
+                }
+                populateStoreDetails();
+                alert('Store updated successfully!');
+            } catch (error) {
+                console.error('Error updating store:', error);
+            }
+        }
+
+        // Function to add product to stock
+        async function addToStock(productId) {
+            try {
+                const storeId = getStoreIdFromUrl();
+                const quantity = document.getElementById(`quantity_${productId}`).value;
+                const response = await fetch(`/api/Store/${storeId}/addStock`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        productId: productId,
+                        quantity: quantity
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to add product to stock');
+                }
+                populateStock(); // Refresh stock table
+                alert('Product added to stock successfully!');
+            } catch (error) {
+                console.error('Error adding product to stock:', error);
+            }
+        }
+
+        // Load data when the page is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            populateStoreDetails();
+            populateStock();
+            populateAllProducts();
+        });
+    </script>
+}

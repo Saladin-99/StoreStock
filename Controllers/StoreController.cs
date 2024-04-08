@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using StoreStock.Models;
 using StoreStock.Services;
 using System;
+using System.Diagnostics.Eventing.Reader;
 
 namespace StoreStock.Controllers
 {
@@ -132,9 +133,12 @@ namespace StoreStock.Controllers
         {
             try
             {
-                Console.Write("aa"+stock.ProductId+"bb"+storeId);
                 StockItem? stockItem = _stockItemService.GetStockItemById(storeId,stock.ProductId);
-                if(stockItem == null)
+                if(stock.Quantity == 0 )
+                {
+                    return Ok("Stock added to store successfully!");
+                }
+                else if(stockItem == null)
                 {
                     _stockItemService.CreateItem(storeId,stock.ProductId,stock.Quantity);
                 }
