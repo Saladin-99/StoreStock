@@ -1,0 +1,120 @@
+@model List<StoreStock.Models.Store>
+
+<h1>Store Page</h1>
+
+<!-- Form to add a new store -->
+<form id="addStoreForm">
+    <input type="text" id="name" placeholder="Store Name" required>
+    <input type="text" id="address" placeholder="Store Address" required>
+    <button type="button" onclick="addStore()">Add Store</button>
+</form>
+
+<table id="storeTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Actions</th> <!-- Manage and Delete buttons -->
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Stores will be dynamically added here -->
+    </tbody>
+</table>
+
+@section scripts {
+    <script>
+        // Function to load stores from the server and render them in the table
+        async function loadStores() {
+            try {
+                const response = await fetch('/api/Store');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch stores');
+                }
+                const stores = await response.json();
+                const storeTableBody = document.querySelector('#storeTable tbody');
+                storeTableBody.innerHTML = ''; // Clear existing rows
+                stores.forEach(store => {
+                    const newRow = `
+                        <tr>
+                            <td>${store.id}</td>
+                            <td>${store.name}</td>
+                            <td>${store.address}</td>
+                            <td>
+                                <button onclick="manageStock(${store.id})">Manage Stock</button>
+                                <button onclick="deleteStore(${store.id})">Delete</button>
+                            </td>
+                        </tr>`;
+                    storeTableBody.insertAdjacentHTML('beforeend', newRow);
+                });
+            } catch (error) {
+                console.error('Error loading stores:', error);
+            }
+        }
+
+        // Load stores when the page is loaded
+        document.addEventListener('DOMContentLoaded', loadStores);
+
+        // Function to open the store page for managing stock
+        function manageStock(storeId) {
+            // Redirect to the store page with the store ID
+            window.location.href = `/Home/StorePage/${storeId}`;
+        }
+
+        // Function to add a new store
+        function addStore() {
+            var name = document.getElementById('name').value;
+            var address = document.getElementById('address').value;
+
+            if (address.trim() === '' || !address) {
+                body = JSON.stringify({
+                    Name: name
+                    })
+            }
+            else 
+            {
+                body = JSON.stringify({
+                    Name: name,
+                    Address: address
+                    })
+            }
+            fetch('/api/Store', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: body
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Error adding store');
+            })
+            .then(data => {
+                // Reload the page to reflect the changes
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error adding store:', error);
+            });
+        }
+
+        // Function to delete a store
+        async function deleteStore(storeId) {
+            try {
+                const response = await fetch(`/api/Store/${storeId}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) {
+                    throw new Error('Error deleting store');
+                }
+                // Reload the page to reflect the changes
+                location.reload();
+            } catch (error) {
+                console.error('Error deleting store:', error);
+            }
+        }
+    </script>
+}
